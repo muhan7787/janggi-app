@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>장기판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=Noto+Sans+TC:wght@900&family=Noto+Sans+KR:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: 조용한 대국실, 화면 그대로의 장기판
+IDEA: 영상 속 나무 장기판과 팔각 장기알
+PICTURE: 판 자체가 화면의 주인공, 위쪽에 작게 제목
+COLOUR and TYPE: 어두운 바탕, 밝은 나무색 판, 초 파랑·한 빨강 / Noto Serif TC 굵은 한자
+LAYOUT: 한 열, 판 아래 조작 버튼
+*/
+:root{color-scheme:light dark;--bg:light-dark(#2a2a2c,#1b1b1d);--ink:#f2efe8;--sub:#b9b4aa;--btn:#3a3a3e;--btnh:#4a4a50}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans KR",system-ui,sans-serif;overflow-x:clip}
+main{max-width:620px;margin:0 auto;padding:20px 12px 36px}
+h1{font-size:22px;margin:0 0 4px;font-weight:700}
+p.note{margin:0 0 14px;color:var(--sub);font-size:14px}
+.board{width:100%;aspect-ratio:920/1020;display:block;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);touch-action:manipulation;user-select:none}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+button{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid #55555b;background:var(--btn);color:var(--ink);cursor:pointer}
+button:hover{background:var(--btnh)}
+button:focus-visible{outline:3px solid #f0b84a;outline-offset:2px}
+.fonts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px}
+.fonts span{color:var(--sub);font-size:14px;margin-right:4px}
+.fonts button{min-height:40px;padding:0 12px;font-size:14px}
+.fonts button[aria-pressed=true]{background:#1c4fbf;border-color:#6d93e8}
+.play{display:flex;flex-direction:column;gap:8px}
+.play.flip .pl-cho{order:3}.play.flip .board{order:2}.play.flip .pl-han{order:1}
+.pl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#333338;border:2px solid transparent;border-radius:12px;padding:8px 10px}
+.pl.on{border-color:#f0b84a;background:#3d3a33}
+.chip{width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center;font:900 17px "Noto Serif TC",serif;background:#f4f5f7}
+.pl-cho .chip{color:#1a3fae}.pl-han .chip{color:#cf1f17}
+.pl input:disabled,.pl select:disabled{opacity:.8}
+.pl input{flex:1 1 90px;min-width:70px;font:inherit;font-size:16px;min-height:40px;padding:0 10px;border-radius:8px;border:1px solid #55555b;background:#26262a;color:var(--ink)}
+.pl select,.bar select{font:inherit;font-size:16px;min-height:40px;padding:0 8px;border-radius:8px;border:1px solid #55555b;background:#26262a;color:var(--ink)}
+.score{font-size:15px;color:var(--sub);white-space:nowrap}.score b{color:var(--ink);font-size:17px}
+.rs{min-height:38px;padding:0 12px;font-size:14px;background:#5a2a2a;border-color:#8a4040}.rs.ask{background:#c0392b;border-color:#e57366}.rs[hidden]{display:none}
+.clock{font:700 22px/1 "Noto Sans KR",system-ui;font-variant-numeric:tabular-nums;min-width:76px;text-align:right;white-space:nowrap}
+.pl.out .score{font-size:15px;color:var(--sub);white-space:nowrap}.score b{color:var(--ink);font-size:17px}
+.rs{min-height:38px;padding:0 12px;font-size:14px;background:#5a2a2a;border-color:#8a4040}.rs.ask{background:#c0392b;border-color:#e57366}.rs[hidden]{display:none}
+.clock{color:#ff6b5e}
+.fl{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:14px}
+button.warn{background:#5a2a2a;border-color:#8a4040}button.warn:hover{background:#6e3232}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.top h1{margin:0}.me{flex:1 1 200px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:14px;color:var(--sub)}
+.me b{color:var(--ink);font-size:16px}.me .rk{background:#f0b84a;color:#2a2a2c;font-weight:700;border-radius:6px;padding:1px 8px}
+.me .prog{white-space:nowrap}.pbar{flex:1 1 100%;height:6px;background:#44444a;border-radius:3px;overflow:hidden}.pbar i{display:block;height:100%;background:#f0b84a}
+button.sm{min-height:38px;font-size:14px;padding:0 12px}
+body.locked main{filter:blur(3px);pointer-events:none}
+.gate{position:fixed;inset:0;background:rgba(20,20,22,.82);display:grid;place-items:center;padding:16px;z-index:10}
+.gate[hidden]{display:none}
+.card{width:min(360px,100%);background:#2f2f33;border:1px solid #4a4a50;border-radius:18px;padding:24px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.logo{align-self:center;width:84px;height:84px;background:#e6bd72;border-radius:20px;display:grid;place-items:center}
+.logo span{width:62px;height:62px;display:grid;place-items:center;background:#f4f5f7;clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);font:900 34px "Noto Serif TC",serif;color:#cf1f17}
+.card h2{margin:0;text-align:center;font-size:24px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tabs button[aria-selected=true]{background:#f0b84a;color:#2a2a2c;border-color:#f0b84a;font-weight:700}
+.card label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--sub)}.card label[hidden]{display:none}
+.card input{font:inherit;font-size:16px;min-height:46px;padding:0 12px;border-radius:10px;border:1px solid #55555b;background:#232326;color:var(--ink)}
+.card input:focus-visible{outline:3px solid #f0b84a;outline-offset:1px}
+.amsg{margin:0;min-height:20px;color:#ff8a7e;font-size:14px}.go{background:#cf1f17;border-color:#cf1f17;font-weight:700;min-height:48px}
+.fine{margin:0;text-align:center;color:var(--sub);font-size:13px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;background:#f0b84a;color:#2a2a2c;font-weight:700;padding:12px 18px;border-radius:12px;pointer-events:none;z-index:20;transition:.3s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#turn{margin-left:auto;align-self:center;color:var(--sub);font-size:14px}
+.pc{cursor:pointer}
+.pc text{pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.pc{transition:transform .18s ease}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><h1>장기</h1><div class="me" id="me-info"></div><button id="logout" class="sm">로그아웃</button></div>
+<p class="note">AI를 이기면 승수가 쌓이고, 급수는 3승·단은 5승마다 승급합니다. AI도 내 급수에 맞춰 강해져요. 새 게임으로 시작한 AI 대국만 기록됩니다.</p>
+<div class="play" id="play"><div class="pl pl-cho" id="pl-cho"><span class="chip">楚</span><input id="nm-cho" value="초" aria-label="초 이름" maxlength="14"><select id="rk-cho" aria-label="초 급수"><option>18급</option><option>17급</option><option>16급</option><option>15급</option><option>14급</option><option>13급</option><option>12급</option><option>11급</option><option>10급</option><option>9급</option><option>8급</option><option>7급</option><option>6급</option><option>5급</option><option>4급</option><option>3급</option><option>2급</option><option>1급</option><option>1단</option><option>2단</option><option>3단</option><option>4단</option><option>5단</option><option>6단</option><option>7단</option><option>8단</option><option>9단</option></select><span class="score" id="sc-cho"></span><button class="rs" id="rs-cho" data-side="cho">기권</button><span class="clock" id="ck-cho">05:00</span></div><svg class="board" id="b" viewBox="0 0 920 1020" xmlns="http://www.w3.org/2000/svg"></svg><div class="pl pl-han" id="pl-han"><span class="chip">漢</span><input id="nm-han" value="한" aria-label="한 이름" maxlength="14"><select id="rk-han" aria-label="한 급수"><option>18급</option><option>17급</option><option>16급</option><option>15급</option><option>14급</option><option>13급</option><option>12급</option><option>11급</option><option>10급</option><option>9급</option><option>8급</option><option>7급</option><option>6급</option><option>5급</option><option>4급</option><option>3급</option><option>2급</option><option>1급</option><option>1단</option><option>2단</option><option>3단</option><option>4단</option><option>5단</option><option>6단</option><option>7단</option><option>8단</option><option>9단</option></select><span class="score" id="sc-han"></span><button class="rs" id="rs-han" data-side="han">기권</button><span class="clock" id="ck-han">05:00</span></div></div>
+<div class="bar">
+  <select id="mode" aria-label="대국 방식"><option value="ai" selected>AI와 두기</option><option value="two">둘이 두기</option><option value="free">자유 이동</option></select>
+  <select id="aiside" aria-label="AI 진영"><option value="cho" selected>AI가 초</option><option value="han">AI가 한</option></select>
+  <button id="undo">한 수 무르기</button>
+  <button id="reset">영상 배치로</button>
+  <label class="fl">초 포진 <select id="f-cho" aria-label="초 포진"><option selected>마상상마</option><option>상마마상</option><option>마상마상</option><option>상마상마</option></select></label>
+  <label class="fl">한 포진 <select id="f-han" aria-label="한 포진"><option>마상상마</option><option>상마마상</option><option>마상마상</option><option>상마상마</option></select></label>
+  <button id="start">새 게임</button>
+  <button id="resign" class="warn">기권</button>
+  <button id="flip">판 뒤집기</button>
+  <button id="clockbtn">시계 시작</button>
+  <select id="tsel" aria-label="제한 시간"><option value="180">3분</option><option value="300" selected>5분</option><option value="600">10분</option><option value="1200">20분</option></select>
+  <span id="turn"></span>
+</div>
+</main>
+<div id="toast" role="status"></div>
+<div class="gate" id="gate" hidden>
+ <form class="card" id="authf" novalidate>
+  <div class="logo"><span>將</span></div>
+  <h2>장기</h2>
+  <div class="tabs" role="tablist"><button type="button" role="tab" data-tab="login">로그인</button><button type="button" role="tab" data-tab="join">회원가입</button></div>
+  <label>아이디<input id="aid" autocomplete="username" maxlength="12" required></label>
+  <label>비밀번호<input id="apw" type="password" autocomplete="current-password" required></label>
+  <label id="pw2w" hidden>비밀번호 확인<input id="apw2" type="password" autocomplete="new-password"></label>
+  <p class="amsg" id="amsg" role="alert"></p>
+  <button type="submit" id="asub" class="go">로그인</button>
+  <p class="fine">계정과 기록은 이 기기에만 저장됩니다.</p>
+ </form>
+</div>
+<script>
+{
+const S=100,M=60,NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('b');
+const X=c=>M+c*S, Y=r=>M+r*S;
+const CHAR={cho:{K:'楚',R:'車',C:'包',H:'馬',E:'象',G:'士',P:'卒'},han:{K:'漢',R:'車',C:'包',H:'馬',E:'象',G:'士',P:'兵'}};
+const GLYPH={"K": "M8.0,33.6 L6.6,33.7 L6.2,33.6 L5.9,33.3 L5.7,32.6 L6.2,30.9 L6.3,30.1 L5.9,29.5 L5.1,29.1 L-0.9,28.6 L-3.8,28.5 L-10.7,29.0 L-13.0,29.3 L-16.0,30.1 L-18.1,30.1 L-21.3,29.6 L-23.4,28.7 L-24.2,28.2 L-25.0,27.4 L-26.2,25.6 L-26.2,25.0 L-26.1,24.4 L-25.8,23.8 L-25.4,23.3 L-24.4,22.8 L-21.4,21.6 L-17.0,20.8 L-14.8,19.8 L-13.4,19.4 L-11.1,19.0 L-8.0,18.6 L-6.4,18.0 L-4.7,17.6 L-1.2,17.3 L1.8,16.4 L2.7,15.9 L3.3,15.3 L4.8,12.5 L6.2,10.9 L6.5,10.4 L6.2,9.8 L5.6,9.4 L4.8,9.3 L3.7,9.5 L0.7,10.6 L-2.8,11.5 L-5.6,12.7 L-9.3,13.5 L-12.1,14.6 L-13.9,14.9 L-17.5,15.3 L-19.6,15.1 L-21.5,14.3 L-23.9,12.5 L-24.9,11.1 L-25.2,10.3 L-25.3,9.3 L-25.0,8.5 L-24.5,8.0 L-23.6,7.6 L-21.4,7.3 L-17.8,7.4 L-13.4,7.1 L-11.6,6.7 L-9.5,5.7 L-7.7,5.2 L-1.1,4.8 L4.4,4.2 L5.7,3.7 L7.4,2.7 L7.4,2.5 L6.9,2.2 L3.1,0.7 L1.0,-1.2 L0.7,-1.8 L0.8,-2.4 L1.3,-3.0 L2.4,-3.5 L2.5,-3.8 L2.2,-4.0 L0.7,-4.4 L-0.4,-4.4 L-4.2,-2.7 L-5.7,-2.4 L-6.4,-2.5 L-6.9,-2.8 L-7.4,-3.4 L-7.8,-4.1 L-7.9,-4.8 L-7.9,-5.6 L-7.6,-6.7 L-7.2,-7.5 L-4.7,-10.2 L-0.4,-13.9 L0.5,-15.1 L0.9,-15.8 L0.8,-16.3 L0.3,-16.6 L-0.7,-16.7 L-3.2,-16.1 L-7.5,-13.5 L-9.1,-12.7 L-9.5,-12.3 L-10.0,-11.3 L-10.4,-9.6 L-10.5,-8.1 L-10.4,-5.4 L-10.6,-4.1 L-12.5,-1.2 L-13.7,-0.1 L-14.7,0.6 L-15.5,0.9 L-16.3,0.9 L-16.9,0.7 L-17.6,0.1 L-18.0,-0.4 L-18.2,-1.0 L-18.4,-3.5 L-18.6,-3.9 L-19.0,-4.1 L-19.8,-3.9 L-20.9,-3.2 L-23.6,-0.8 L-25.0,0.7 L-25.8,1.2 L-26.7,1.5 L-28.0,1.6 L-30.0,1.1 L-31.0,0.3 L-31.7,-0.9 L-32.0,-1.6 L-32.0,-2.3 L-31.7,-3.6 L-30.4,-5.7 L-28.6,-7.8 L-27.5,-9.5 L-26.3,-11.0 L-24.6,-14.6 L-24.4,-15.3 L-24.5,-16.0 L-25.0,-16.5 L-28.0,-17.8 L-28.7,-18.2 L-29.4,-18.9 L-29.8,-19.4 L-30.0,-19.9 L-30.1,-20.5 L-30.0,-21.1 L-29.3,-21.9 L-28.4,-22.4 L-23.2,-22.8 L-21.1,-22.8 L-19.9,-23.3 L-19.0,-24.0 L-18.6,-24.7 L-18.3,-25.4 L-18.1,-27.5 L-18.2,-31.5 L-18.4,-32.7 L-19.1,-34.5 L-19.1,-35.9 L-18.7,-36.8 L-18.0,-37.5 L-16.9,-38.2 L-15.4,-38.9 L-13.2,-39.5 L-11.8,-39.6 L-10.6,-39.3 L-9.6,-38.5 L-9.0,-37.6 L-8.8,-36.8 L-8.6,-33.8 L-8.7,-31.2 L-8.4,-29.2 L-8.1,-28.2 L-7.9,-27.8 L-7.4,-27.5 L-4.7,-27.0 L-4.2,-26.5 L-3.9,-25.9 L-3.7,-25.2 L-3.9,-24.3 L-4.1,-23.5 L-4.5,-22.8 L-6.2,-21.0 L-8.6,-19.6 L-9.4,-18.8 L-9.5,-18.3 L-9.4,-17.9 L-9.1,-17.6 L-8.7,-17.6 L-7.7,-17.8 L-6.6,-18.6 L-4.9,-19.5 L-3.6,-20.4 L-1.7,-21.1 L0.0,-22.0 L1.8,-22.7 L5.0,-25.4 L5.4,-26.0 L5.6,-26.8 L5.8,-30.7 L5.6,-32.1 L4.6,-34.5 L4.6,-35.2 L4.9,-36.0 L5.3,-36.7 L6.0,-37.4 L7.0,-38.2 L7.8,-38.6 L8.7,-38.8 L9.5,-38.8 L10.3,-38.6 L10.9,-38.3 L11.6,-37.7 L12.2,-37.0 L13.0,-35.0 L13.2,-33.8 L13.4,-29.3 L13.6,-28.4 L14.1,-27.7 L15.0,-27.2 L17.1,-26.8 L21.7,-26.5 L23.4,-26.3 L24.2,-26.1 L25.5,-25.4 L26.6,-24.5 L27.3,-23.6 L27.6,-22.7 L27.4,-21.8 L26.9,-21.0 L25.8,-20.1 L24.7,-19.6 L22.3,-19.1 L16.0,-19.0 L14.7,-18.7 L13.9,-18.3 L13.2,-17.5 L13.0,-16.5 L12.9,-12.9 L13.0,-12.3 L13.3,-11.7 L14.1,-11.0 L15.1,-10.6 L17.4,-10.4 L22.2,-10.2 L29.0,-8.4 L31.5,-7.0 L33.5,-5.5 L35.4,-3.5 L36.2,-1.7 L36.4,-0.7 L36.5,0.4 L36.5,1.2 L36.2,1.9 L35.7,2.7 L35.0,3.3 L34.3,3.6 L33.5,3.6 L29.8,2.5 L27.1,2.6 L25.4,2.4 L24.0,2.4 L23.6,2.3 L23.4,1.9 L23.5,1.3 L25.4,-0.6 L25.7,-1.2 L25.8,-1.7 L25.6,-2.3 L25.2,-2.8 L23.5,-4.1 L22.8,-4.5 L21.8,-4.7 L16.1,-5.1 L14.3,-4.9 L13.6,-4.6 L13.1,-4.2 L12.7,-3.3 L11.9,0.1 L11.3,1.1 L10.1,2.2 L10.1,2.5 L11.0,3.0 L12.0,3.0 L13.3,2.6 L15.3,1.6 L16.2,1.4 L17.1,1.4 L18.9,1.8 L20.5,2.9 L21.9,3.5 L22.4,3.9 L23.4,5.1 L23.6,5.5 L23.6,6.0 L23.3,7.2 L21.7,9.6 L20.8,10.4 L19.5,10.9 L18.0,10.9 L13.2,10.6 L12.0,10.9 L11.0,11.4 L10.6,12.0 L10.8,12.9 L11.2,13.5 L12.7,15.2 L13.2,15.9 L13.3,16.4 L13.2,17.0 L12.8,17.6 L12.3,18.1 L11.6,18.5 L10.2,18.9 L7.7,19.0 L4.7,19.0 L1.0,18.8 L0.1,18.8 L-1.9,19.5 L-4.0,20.7 L-5.7,21.3 L-6.3,21.8 L-6.5,22.3 L-6.4,22.7 L-6.1,23.1 L-5.5,23.4 L-4.8,23.5 L4.5,23.3 L9.4,23.4 L12.2,23.6 L16.0,24.2 L18.1,24.9 L19.4,25.7 L20.9,27.4 L21.6,28.6 L21.8,29.8 L21.5,31.0 L20.8,31.9 L19.9,32.4 L18.0,32.8 L10.8,33.2 L8.0,33.6Z M-18.7,-11.3 L-18.5,-11.6 L-18.4,-12.1 L-18.6,-12.5 L-18.9,-12.5 L-19.2,-12.3 L-19.3,-11.8 L-19.1,-11.4 L-18.7,-11.3Z", "R": "M-0.4,37.6 L-2.7,37.7 L-5.0,37.1 L-7.7,35.3 L-10.8,34.2 L-12.9,33.1 L-16.1,31.7 L-18.6,30.0 L-19.4,28.8 L-19.9,26.9 L-19.9,25.2 L-19.1,23.8 L-17.6,22.5 L-16.2,21.6 L-14.9,21.1 L-13.2,20.7 L-8.8,20.4 L-5.2,19.0 L-2.6,18.2 L-1.9,17.7 L-1.3,17.0 L-1.1,16.2 L-1.1,15.4 L-1.4,14.4 L-1.9,13.5 L-2.5,13.0 L-3.3,12.7 L-4.2,12.6 L-5.8,13.0 L-9.6,13.2 L-16.3,13.4 L-17.6,13.1 L-18.7,12.6 L-20.7,11.3 L-21.5,10.5 L-22.3,9.2 L-22.8,7.7 L-23.1,6.4 L-23.0,5.4 L-21.7,2.1 L-20.4,0.2 L-19.3,-2.1 L-17.8,-4.5 L-16.3,-8.3 L-16.1,-9.2 L-16.4,-9.9 L-17.0,-10.3 L-21.2,-11.6 L-22.9,-12.4 L-23.7,-13.0 L-24.6,-14.2 L-25.5,-15.7 L-25.9,-17.3 L-26.0,-18.7 L-25.9,-19.8 L-25.5,-20.5 L-24.9,-21.0 L-24.0,-21.3 L-22.4,-21.4 L-10.0,-21.4 L-8.2,-21.7 L-6.8,-22.3 L-5.5,-23.5 L-3.3,-27.3 L-2.7,-29.8 L-2.4,-32.6 L-1.8,-34.2 L-1.0,-34.9 L0.1,-35.4 L1.2,-35.6 L2.9,-35.6 L4.3,-35.5 L5.6,-35.1 L7.3,-34.3 L8.3,-33.6 L9.2,-32.3 L9.7,-29.6 L10.3,-28.1 L12.6,-25.7 L15.8,-23.2 L17.5,-22.3 L20.5,-21.4 L24.8,-20.6 L26.0,-20.1 L26.8,-19.6 L28.3,-17.5 L28.9,-16.3 L29.3,-14.8 L29.1,-13.3 L28.6,-12.4 L27.9,-11.5 L27.1,-11.0 L26.3,-10.8 L13.3,-11.2 L10.0,-11.0 L5.5,-10.5 L2.7,-10.9 L-0.6,-10.3 L-1.5,-9.8 L-2.3,-9.2 L-3.5,-7.8 L-5.1,-6.1 L-8.0,-2.5 L-10.2,1.0 L-10.6,1.9 L-10.5,2.7 L-10.0,3.3 L-9.3,3.7 L-6.1,4.0 L-2.4,3.7 L-1.7,3.5 L-1.0,3.0 L-0.1,2.1 L0.5,0.7 L1.1,-4.3 L1.7,-6.5 L2.2,-7.3 L2.9,-7.7 L4.9,-8.3 L6.3,-8.1 L9.0,-7.1 L14.5,-3.4 L18.0,-1.2 L19.9,-0.2 L21.7,1.3 L22.3,2.1 L22.6,3.0 L22.8,4.0 L22.8,5.0 L22.5,5.8 L22.0,6.8 L21.2,7.7 L19.9,8.4 L17.3,9.1 L14.2,10.3 L10.7,10.9 L9.5,11.4 L8.9,12.1 L8.6,13.0 L8.7,15.8 L8.9,16.9 L9.4,17.8 L10.1,18.3 L12.4,19.0 L16.0,20.4 L20.0,21.1 L23.2,22.5 L26.7,24.1 L28.1,25.2 L29.2,26.3 L29.8,27.6 L30.0,29.0 L29.9,29.9 L29.5,30.6 L28.9,31.2 L28.1,31.7 L23.0,32.7 L21.9,33.2 L19.6,34.6 L18.8,34.7 L17.4,34.6 L16.3,34.0 L16.0,33.6 L15.9,33.1 L16.2,32.0 L17.7,29.5 L17.7,28.9 L17.4,28.3 L16.5,27.6 L13.3,25.8 L11.5,25.3 L10.0,25.4 L9.1,26.0 L8.5,26.8 L7.9,29.0 L6.8,32.4 L6.1,34.2 L5.5,35.1 L4.3,36.1 L3.0,36.9 L1.7,37.3 L-0.4,37.6Z M9.5,-19.0 L10.3,-19.5 L10.8,-20.4 L10.7,-21.2 L10.1,-22.0 L8.9,-23.0 L8.0,-23.4 L6.8,-23.3 L5.8,-22.7 L5.3,-22.0 L5.0,-21.3 L5.1,-20.7 L5.5,-20.2 L6.3,-19.7 L7.4,-19.2 L8.6,-19.0 L9.5,-19.0Z M11.7,2.9 L12.3,2.6 L12.7,2.0 L12.8,1.3 L12.6,0.6 L12.1,0.0 L11.5,-0.3 L10.7,-0.4 L10.0,-0.2 L9.6,0.1 L9.3,0.7 L9.4,1.3 L9.6,2.0 L10.0,2.5 L10.5,2.8 L11.7,2.9Z M-4.4,29.9 L-3.8,29.5 L-3.4,28.7 L-3.4,27.6 L-3.8,26.8 L-4.4,26.2 L-5.2,25.9 L-6.1,25.9 L-6.9,26.2 L-7.3,26.7 L-7.5,27.3 L-7.5,28.1 L-7.2,28.8 L-6.7,29.3 L-6.0,29.7 L-5.1,29.9 L-4.4,29.9Z", "H": "M28.0,-15.1 L24.9,-15.1 L19.9,-15.5 L18.0,-15.1 L17.5,-15.2 L17.3,-15.6 L17.4,-16.0 L19.6,-17.2 L20.3,-18.1 L20.6,-19.0 L20.4,-19.8 L19.9,-20.3 L19.0,-20.6 L17.6,-20.7 L15.1,-20.7 L6.7,-20.1 L-1.8,-19.8 L-3.7,-19.3 L-7.4,-17.7 L-9.4,-17.4 L-16.0,-16.9 L-19.3,-17.3 L-20.2,-17.5 L-21.1,-18.1 L-23.2,-20.5 L-24.1,-22.3 L-24.3,-23.3 L-24.3,-24.2 L-24.0,-24.9 L-23.5,-25.4 L-22.6,-25.8 L-21.3,-26.0 L-19.4,-26.0 L-13.9,-25.7 L-9.3,-26.1 L-6.2,-26.6 L-0.5,-26.9 L10.6,-28.1 L20.4,-28.6 L22.4,-28.5 L25.0,-27.7 L26.9,-26.7 L28.7,-25.3 L30.0,-23.9 L31.9,-21.9 L32.5,-21.0 L32.7,-20.0 L32.7,-18.9 L32.5,-17.7 L32.1,-17.0 L31.4,-16.4 L30.2,-15.7 L28.0,-15.1Z M6.1,35.1 L-0.4,35.1 L-5.8,34.6 L-6.8,34.3 L-9.0,33.0 L-11.4,31.9 L-13.6,30.5 L-14.8,30.1 L-19.4,29.6 L-20.6,29.0 L-21.4,28.1 L-21.6,27.4 L-21.5,26.7 L-20.0,24.8 L-19.5,23.3 L-19.7,22.0 L-20.5,19.5 L-20.8,17.6 L-20.8,15.2 L-20.4,13.2 L-19.7,11.2 L-18.8,9.5 L-17.3,8.1 L-15.4,7.0 L-13.9,6.8 L-11.9,6.6 L-8.9,6.6 L-6.5,6.8 L-6.3,7.0 L-5.6,8.2 L-3.2,11.3 L-2.5,12.5 L-2.3,13.8 L-2.3,18.3 L-2.9,20.1 L-4.6,22.5 L-4.9,23.2 L-5.0,24.0 L-4.8,25.0 L-4.3,25.8 L-3.5,26.4 L-2.1,27.0 L0.0,27.4 L2.0,27.4 L4.6,26.4 L8.0,24.6 L10.2,22.9 L11.5,21.3 L13.2,18.2 L13.6,16.5 L13.6,15.6 L13.4,14.6 L12.0,12.1 L9.4,9.4 L8.5,8.7 L5.4,7.5 L3.1,7.0 L0.5,6.8 L-5.1,6.8 L-6.2,6.7 L-6.6,4.0 L-6.5,2.5 L-6.3,1.7 L-5.6,0.6 L-3.5,-1.1 L-2.0,-2.7 L-1.5,-3.9 L-1.7,-5.0 L-2.0,-5.3 L-2.5,-5.5 L-4.4,-5.6 L-6.0,-5.1 L-8.8,-3.7 L-9.6,-3.4 L-12.3,-3.1 L-13.7,-3.5 L-15.1,-4.4 L-17.3,-6.7 L-18.3,-7.9 L-19.0,-9.2 L-19.3,-10.1 L-19.2,-11.1 L-18.6,-12.1 L-17.9,-12.8 L-17.0,-13.0 L-13.2,-13.7 L-8.8,-14.2 L-5.4,-14.2 L0.6,-14.6 L7.7,-14.5 L10.0,-14.2 L11.7,-13.4 L13.3,-12.2 L14.4,-10.6 L15.6,-7.6 L15.6,-6.8 L15.3,-6.0 L14.4,-4.7 L13.1,-3.7 L12.3,-3.3 L10.4,-2.8 L9.5,-2.3 L8.8,-1.2 L8.6,-0.4 L8.7,0.2 L9.2,0.9 L10.0,1.5 L13.6,2.2 L18.7,4.3 L20.1,5.4 L22.3,7.9 L23.2,9.8 L23.7,12.5 L23.7,16.2 L23.3,21.0 L22.7,22.7 L20.1,27.3 L19.2,28.5 L17.5,30.1 L14.4,32.5 L11.5,34.3 L10.0,34.8 L6.1,35.1Z M-11.7,20.5 L-10.7,20.0 L-10.1,19.2 L-9.8,17.6 L-9.8,15.5 L-10.1,14.5 L-10.7,13.7 L-11.7,13.2 L-12.6,13.2 L-13.7,13.6 L-14.5,14.4 L-14.8,15.4 L-14.7,16.9 L-14.4,18.8 L-13.9,19.6 L-12.9,20.4 L-11.7,20.5Z", "E": "M-1.1,39.1 L-2.5,39.1 L-4.4,38.5 L-7.7,36.9 L-8.8,36.2 L-10.3,34.9 L-13.1,30.8 L-14.6,28.9 L-15.5,28.2 L-16.9,27.8 L-23.3,26.9 L-25.1,26.1 L-26.3,25.0 L-27.8,22.5 L-28.2,21.4 L-28.3,20.2 L-28.2,19.2 L-27.6,17.3 L-26.5,15.4 L-25.1,14.0 L-24.3,13.5 L-23.3,13.2 L-20.4,13.2 L-18.9,13.5 L-17.3,14.1 L-14.5,16.0 L-13.3,16.4 L-12.4,16.2 L-8.2,14.6 L-6.9,14.5 L-5.4,15.1 L-2.4,17.3 L-1.3,17.6 L-0.2,17.4 L1.1,16.7 L2.1,15.8 L2.8,14.8 L3.1,13.3 L2.9,12.1 L1.4,10.4 L0.0,9.3 L-1.0,8.9 L-1.9,8.9 L-2.7,9.1 L-4.6,10.0 L-5.8,10.1 L-7.4,9.6 L-9.1,8.6 L-9.6,7.9 L-9.8,6.9 L-9.9,5.6 L-9.8,3.6 L-10.0,2.3 L-10.5,1.5 L-11.7,0.1 L-13.0,-2.1 L-13.8,-2.9 L-14.8,-3.3 L-15.8,-3.1 L-17.3,-2.5 L-19.9,-0.8 L-20.8,-0.5 L-22.0,-0.5 L-23.2,-0.9 L-24.2,-1.7 L-25.5,-3.2 L-26.0,-4.6 L-25.9,-5.6 L-25.6,-6.4 L-25.0,-7.0 L-24.3,-7.5 L-19.0,-9.7 L-16.1,-10.3 L-13.5,-11.5 L-11.5,-12.1 L-8.2,-12.7 L-6.8,-13.1 L-4.3,-14.5 L-3.2,-15.4 L-2.7,-16.2 L-2.3,-17.4 L-2.1,-19.8 L-2.2,-20.5 L-2.5,-21.0 L-3.6,-21.7 L-4.6,-21.8 L-5.7,-21.4 L-8.3,-19.8 L-10.4,-17.9 L-11.5,-17.3 L-12.7,-17.2 L-13.7,-17.6 L-14.2,-18.2 L-14.4,-19.2 L-14.2,-19.8 L-13.8,-20.4 L-10.8,-23.6 L-7.5,-27.9 L-6.5,-29.5 L-5.0,-32.6 L-4.6,-33.3 L-2.3,-35.3 L-1.5,-35.7 L-0.8,-35.8 L0.2,-35.5 L1.4,-34.8 L4.7,-31.1 L5.9,-30.0 L6.8,-29.6 L8.7,-29.1 L9.8,-28.7 L10.8,-28.0 L11.4,-27.1 L11.8,-25.4 L11.6,-23.8 L11.0,-22.9 L9.5,-21.5 L7.7,-19.4 L7.4,-18.3 L7.6,-17.9 L7.9,-17.5 L8.5,-17.3 L9.3,-17.2 L14.4,-17.6 L18.9,-17.5 L25.0,-16.7 L26.5,-16.0 L29.6,-13.7 L30.9,-12.0 L31.3,-10.5 L31.0,-9.3 L29.8,-8.1 L27.2,-6.3 L24.9,-5.2 L23.1,-4.1 L20.8,-3.4 L16.4,-3.1 L15.8,-3.1 L15.4,-3.3 L15.3,-3.7 L15.5,-4.5 L15.9,-5.4 L16.9,-6.7 L17.9,-8.2 L18.2,-9.2 L18.2,-9.8 L17.8,-10.4 L17.3,-10.9 L16.7,-11.3 L14.8,-11.7 L12.9,-11.7 L9.5,-10.9 L6.4,-10.8 L4.9,-10.5 L3.2,-10.0 L2.4,-9.3 L2.2,-8.5 L2.6,-7.4 L4.4,-4.8 L5.4,-3.9 L6.8,-3.1 L10.2,-2.6 L10.8,-2.4 L11.2,-2.0 L11.1,-1.5 L10.3,-1.1 L9.0,-0.7 L6.0,-0.2 L5.4,0.1 L5.0,0.7 L5.0,2.1 L5.6,3.7 L7.1,5.6 L8.5,6.6 L9.2,6.9 L10.0,6.9 L12.0,6.0 L15.0,3.9 L17.3,1.8 L18.7,1.0 L20.4,0.4 L21.4,0.3 L22.6,0.5 L24.3,1.4 L25.3,2.3 L27.3,5.0 L27.5,6.0 L27.4,7.0 L27.0,7.9 L25.4,9.2 L23.0,11.8 L22.7,12.4 L22.7,13.1 L23.1,13.9 L23.7,14.6 L26.8,16.4 L29.4,18.8 L30.1,20.0 L30.3,21.5 L30.1,22.5 L29.5,23.7 L27.9,25.8 L27.0,26.7 L26.1,27.3 L25.0,27.7 L23.6,27.9 L22.5,27.9 L21.2,27.4 L20.6,26.7 L20.6,26.1 L21.6,21.3 L21.4,20.0 L20.9,19.0 L19.6,18.1 L18.3,17.8 L16.2,18.0 L14.3,18.6 L13.3,19.5 L12.6,20.9 L12.3,22.1 L11.8,25.5 L11.1,27.4 L9.1,30.0 L7.2,33.0 L5.8,34.9 L3.5,37.2 L1.1,38.5 L-1.1,39.1Z M-5.5,-3.2 L-4.8,-3.6 L-4.6,-4.4 L-5.0,-5.2 L-5.8,-5.3 L-6.5,-5.0 L-6.6,-4.2 L-6.2,-3.5 L-5.5,-3.2Z M15.9,10.6 L16.8,10.0 L17.4,9.2 L17.6,8.2 L17.3,7.7 L16.7,7.7 L15.8,8.0 L15.0,8.6 L14.6,9.2 L14.4,9.8 L14.6,10.4 L15.2,10.7 L15.9,10.6Z M-20.8,23.7 L-19.8,23.1 L-19.1,22.1 L-18.8,21.1 L-19.0,19.8 L-19.5,18.8 L-20.2,18.3 L-21.4,18.1 L-22.6,18.2 L-23.4,18.7 L-23.9,19.5 L-24.0,20.7 L-23.9,22.0 L-23.5,22.9 L-22.9,23.4 L-21.8,23.7 L-20.8,23.7Z M-3.0,33.0 L-1.9,32.7 L-1.2,32.3 L3.2,27.4 L3.7,26.3 L3.7,25.7 L3.4,25.1 L2.9,24.6 L2.3,24.5 L-1.7,25.6 L-3.5,25.6 L-4.3,25.3 L-5.0,24.7 L-6.7,22.3 L-7.7,21.5 L-8.6,21.1 L-9.3,21.1 L-10.0,21.2 L-10.8,21.7 L-11.9,22.9 L-12.5,24.2 L-12.6,25.7 L-12.1,27.0 L-9.3,30.0 L-6.7,32.4 L-5.2,33.0 L-3.0,33.0Z", "C": "M-21.5,-13.8 L-22.5,-13.8 L-23.3,-14.2 L-24.1,-14.9 L-24.7,-16.0 L-24.9,-16.8 L-24.8,-17.9 L-24.2,-20.0 L-22.7,-22.6 L-21.5,-24.4 L-18.1,-28.2 L-16.3,-30.4 L-15.1,-32.1 L-14.4,-33.7 L-13.8,-36.2 L-13.3,-37.1 L-12.5,-38.0 L-11.3,-38.4 L-10.4,-38.4 L-9.2,-38.2 L-6.9,-37.1 L-5.8,-36.2 L-4.4,-34.8 L-3.1,-33.1 L-2.9,-31.9 L-3.2,-30.6 L-3.7,-29.8 L-5.5,-27.7 L-6.1,-26.5 L-6.1,-25.7 L-5.5,-25.2 L-4.8,-25.2 L-2.0,-25.8 L0.5,-25.6 L1.9,-25.7 L5.1,-26.4 L7.9,-27.7 L11.1,-28.3 L19.6,-28.7 L23.6,-28.1 L25.4,-27.5 L30.1,-24.4 L30.9,-23.5 L31.4,-22.1 L31.3,-21.0 L30.9,-19.6 L30.1,-18.6 L29.0,-17.8 L23.3,-15.3 L16.3,-14.0 L13.6,-13.8 L13.1,-14.0 L12.9,-14.5 L13.3,-15.4 L15.8,-17.9 L16.4,-18.7 L16.6,-19.4 L16.6,-20.0 L16.1,-21.4 L15.5,-22.0 L14.4,-22.4 L10.1,-22.9 L2.4,-22.7 L-4.3,-21.6 L-8.6,-19.2 L-11.7,-18.4 L-15.0,-16.8 L-17.9,-15.0 L-21.5,-13.8Z M-1.4,31.5 L-15.7,30.6 L-18.2,30.1 L-21.4,28.8 L-22.3,28.2 L-23.7,26.8 L-24.4,25.8 L-25.1,24.3 L-25.5,22.9 L-25.7,19.8 L-25.4,17.9 L-24.9,16.9 L-21.4,11.7 L-21.0,10.5 L-21.2,9.2 L-22.7,6.8 L-23.5,4.6 L-23.7,3.1 L-23.6,2.0 L-23.4,0.8 L-22.8,-0.6 L-22.3,-1.4 L-21.6,-2.0 L-17.6,-4.2 L-16.1,-4.6 L-11.3,-5.0 L-10.2,-5.3 L-9.6,-5.7 L-9.4,-6.1 L-9.3,-6.8 L-9.4,-7.6 L-9.7,-8.2 L-10.5,-8.9 L-13.0,-10.1 L-13.6,-10.8 L-13.6,-11.5 L-13.1,-12.4 L-11.5,-13.4 L-9.8,-14.0 L-7.7,-14.5 L-5.8,-14.6 L-1.9,-14.3 L0.1,-13.9 L1.2,-13.4 L2.0,-12.5 L2.5,-11.1 L2.7,-9.4 L2.6,-6.0 L2.8,-5.1 L3.3,-4.4 L4.8,-3.5 L6.4,-2.8 L12.3,-1.9 L13.5,-1.6 L18.3,0.6 L22.7,3.2 L25.4,5.6 L28.0,8.3 L29.2,10.2 L30.4,13.0 L30.7,14.2 L30.8,15.8 L30.4,17.4 L27.8,22.6 L24.9,25.2 L21.4,27.4 L15.3,29.9 L13.2,30.5 L-1.4,31.5Z M-2.6,22.7 L4.6,22.4 L8.5,21.5 L12.1,21.0 L13.2,20.7 L15.5,19.5 L17.9,18.6 L18.8,17.8 L19.8,16.8 L20.8,15.5 L21.2,14.5 L21.6,12.4 L21.8,10.6 L21.5,9.5 L21.0,8.3 L20.1,7.3 L18.1,5.4 L15.7,4.2 L13.9,2.8 L12.9,2.4 L9.0,1.7 L5.5,-0.3 L3.7,-0.6 L-0.8,-0.5 L-3.0,-0.2 L-4.3,0.3 L-5.2,1.1 L-7.0,3.0 L-7.2,3.9 L-6.8,4.9 L-6.1,5.4 L-5.2,5.6 L-1.7,5.4 L0.7,5.4 L3.3,6.0 L5.6,6.9 L7.1,8.0 L7.8,9.3 L8.1,10.4 L8.1,11.4 L8.0,12.3 L7.6,12.9 L5.5,14.9 L3.5,15.8 L1.4,16.1 L-3.3,16.1 L-4.9,15.6 L-5.6,15.0 L-5.9,14.4 L-5.8,13.0 L-5.9,12.4 L-6.4,11.7 L-7.5,10.6 L-8.8,10.0 L-10.6,9.9 L-11.4,10.1 L-12.0,10.4 L-14.8,12.9 L-15.9,14.5 L-16.2,16.0 L-15.9,16.8 L-15.2,17.6 L-13.2,19.7 L-11.7,20.8 L-9.8,21.4 L-6.0,22.4 L-4.3,22.7 L-2.6,22.7Z M-15.3,3.2 L-14.8,2.9 L-14.3,2.3 L-14.0,1.8 L-14.0,1.2 L-14.2,0.6 L-14.6,0.2 L-15.2,-0.1 L-15.8,-0.1 L-16.7,0.2 L-17.2,0.7 L-17.6,1.3 L-17.6,1.9 L-17.3,2.5 L-16.8,3.0 L-16.1,3.3 L-15.3,3.2Z", "G": "M-8.8,28.1 L-11.3,28.1 L-13.4,27.1 L-14.7,26.1 L-15.6,25.0 L-16.0,24.1 L-16.0,23.2 L-15.4,22.1 L-14.5,21.5 L-9.7,20.2 L-5.6,19.6 L-4.4,19.0 L-3.7,18.2 L-3.2,16.5 L-3.2,12.8 L-2.8,9.3 L-2.8,4.9 L-3.5,2.9 L-4.3,2.1 L-5.3,1.6 L-6.5,1.5 L-8.4,1.8 L-10.2,2.4 L-13.0,4.3 L-14.3,4.9 L-17.4,5.8 L-19.3,5.8 L-21.0,5.3 L-22.4,4.7 L-23.7,3.8 L-25.7,2.1 L-26.4,1.3 L-26.8,0.4 L-27.0,-0.7 L-27.0,-1.6 L-26.5,-2.4 L-25.4,-2.9 L-23.8,-3.3 L-19.7,-3.8 L-16.8,-4.5 L-9.4,-6.9 L-7.6,-7.9 L-5.2,-10.4 L-4.7,-11.3 L-4.4,-12.2 L-4.1,-17.8 L-4.5,-19.3 L-5.5,-21.0 L-5.7,-21.9 L-5.6,-23.1 L-5.1,-24.1 L-4.6,-24.8 L-3.8,-25.2 L-1.2,-26.1 L1.3,-26.3 L4.1,-26.1 L5.3,-25.7 L6.3,-25.0 L7.0,-24.1 L7.5,-22.9 L7.6,-21.3 L6.7,-19.0 L6.5,-16.9 L6.9,-13.7 L7.2,-12.9 L7.8,-12.3 L8.8,-11.9 L10.1,-11.7 L15.3,-12.5 L18.5,-12.8 L22.6,-12.7 L26.3,-12.2 L28.1,-11.3 L30.9,-8.7 L31.6,-7.2 L31.6,-5.6 L31.2,-4.6 L30.5,-3.8 L29.4,-3.2 L28.2,-2.9 L25.1,-2.8 L15.9,-3.2 L13.8,-2.9 L11.0,-1.9 L8.5,-0.7 L7.3,0.3 L6.6,1.5 L6.2,4.0 L6.4,12.8 L6.5,14.4 L6.9,15.4 L8.1,16.2 L10.0,16.4 L11.3,16.1 L14.4,14.8 L16.3,14.3 L18.4,14.3 L20.3,14.7 L21.3,15.4 L22.4,16.3 L23.1,17.4 L23.6,18.4 L23.7,19.4 L23.5,20.3 L22.9,21.2 L22.1,22.1 L19.0,24.2 L16.2,25.2 L12.5,25.4 L5.1,25.2 L-2.2,25.7 L-4.3,26.2 L-7.1,27.6 L-8.8,28.1Z", "P": "M4.4,28.5 L3.4,28.4 L2.5,27.6 L0.5,23.4 L0.3,21.9 L0.5,13.5 L0.2,12.5 L-0.6,11.6 L-2.2,10.9 L-4.4,10.9 L-7.4,11.6 L-11.3,13.3 L-13.8,13.6 L-16.0,13.5 L-17.8,13.0 L-19.1,12.2 L-21.0,10.3 L-21.5,9.4 L-21.7,8.7 L-21.6,7.9 L-21.2,7.4 L-19.9,6.8 L-15.0,6.7 L-9.7,5.7 L-7.2,5.4 L-2.8,5.7 L-0.7,4.6 L0.4,3.4 L0.8,1.9 L0.8,-0.3 L0.4,-1.2 L-0.4,-1.8 L-1.5,-1.9 L-2.8,-1.5 L-7.6,1.2 L-9.0,1.7 L-11.2,2.2 L-13.7,2.3 L-15.9,1.9 L-17.5,0.9 L-18.5,-0.6 L-18.7,-2.5 L-18.4,-4.3 L-17.4,-6.6 L-16.4,-7.8 L-13.4,-10.8 L-11.6,-12.1 L-9.1,-13.1 L-6.6,-14.8 L-5.4,-15.2 L-3.4,-15.3 L-2.5,-15.6 L-0.9,-16.9 L-0.4,-18.1 L-0.6,-18.7 L-1.1,-19.3 L-1.8,-19.6 L-2.5,-19.6 L-4.1,-19.0 L-10.0,-16.2 L-11.5,-16.0 L-13.8,-16.2 L-15.9,-17.3 L-17.8,-19.1 L-18.2,-20.0 L-18.5,-21.0 L-18.4,-21.8 L-18.1,-22.5 L-17.1,-23.6 L-15.4,-24.2 L-2.6,-24.9 L0.6,-25.7 L1.9,-26.3 L2.3,-26.8 L2.5,-27.4 L2.2,-28.5 L1.6,-29.4 L0.0,-31.0 L-1.4,-32.8 L-2.2,-34.4 L-2.1,-35.1 L-1.5,-35.9 L-0.6,-36.3 L0.6,-36.5 L2.4,-36.4 L3.8,-36.0 L5.4,-35.1 L6.3,-34.1 L6.7,-32.9 L6.8,-31.9 L5.7,-29.3 L5.4,-28.2 L5.5,-27.6 L6.0,-27.2 L7.4,-27.0 L10.9,-27.1 L12.4,-27.5 L15.4,-28.7 L18.8,-29.0 L20.1,-28.8 L21.3,-28.4 L22.5,-27.6 L23.6,-26.5 L24.2,-25.3 L24.4,-22.9 L24.7,-21.9 L27.8,-17.6 L28.3,-16.2 L28.2,-14.6 L27.8,-13.4 L26.3,-11.4 L24.1,-9.0 L23.7,-8.1 L23.8,-7.4 L24.1,-6.7 L26.8,-5.0 L27.4,-4.3 L27.8,-3.5 L27.8,-2.5 L27.6,-1.5 L27.2,-0.7 L26.2,0.4 L26.1,1.0 L26.3,1.5 L27.1,1.9 L30.6,2.9 L32.2,3.7 L33.4,4.9 L33.9,6.0 L33.7,6.9 L33.3,7.6 L32.6,8.1 L31.8,8.3 L24.1,8.9 L14.6,8.9 L12.9,9.2 L11.8,9.7 L10.9,10.8 L10.3,12.4 L9.6,19.7 L8.7,23.2 L6.8,27.0 L5.6,28.0 L4.4,28.5Z M12.8,1.6 L16.5,-0.4 L17.3,-1.3 L17.2,-2.6 L15.4,-5.1 L15.1,-6.5 L15.4,-7.4 L15.9,-8.3 L18.6,-10.9 L19.9,-12.9 L20.1,-14.0 L20.0,-14.9 L19.6,-15.8 L18.8,-16.3 L17.9,-16.4 L16.9,-16.3 L14.7,-15.1 L11.7,-12.5 L10.1,-10.4 L9.5,-9.1 L9.1,-6.0 L9.1,-1.5 L9.3,-0.3 L9.8,0.7 L10.6,1.4 L11.6,1.7 L12.8,1.6Z M-3.6,-5.9 L-1.5,-6.9 L-0.8,-7.6 L-0.3,-8.4 L-0.2,-9.3 L-0.4,-10.0 L-0.9,-10.6 L-1.6,-11.1 L-2.4,-11.1 L-2.9,-10.9 L-5.0,-9.0 L-5.6,-8.2 L-5.7,-7.2 L-5.3,-6.3 L-4.6,-5.8 L-3.6,-5.9Z"};
+const FONTS=[
+ {id:'video',name:'영상체',fam:'"Noto Serif TC"',w:900,k:1,simp:true,svg:true},
+ {id:'hang',name:'행서',fam:'"Zhi Mang Xing"',w:400,k:1.25,simp:true},
+ {id:'cho',name:'초서',fam:'"Liu Jian Mao Cao"',w:400,k:1.25,simp:true},
+ {id:'brush',name:'붓글씨',fam:'"Long Cang"',w:400,k:1.22,simp:true},
+ {id:'ma',name:'굵은 붓',fam:'"Ma Shan Zheng"',w:400,k:1.2,simp:true},
+ {id:'hae',name:'해서',fam:'"Noto Serif TC"',w:900,k:1.02,simp:false},
+ {id:'go',name:'고딕',fam:'"Noto Sans TC"',w:900,k:0.98,simp:false}];
+const SIMP={'車':'车','馬':'马'};
+let font=FONTS[0];
+
+const fbox=document.getElementById('fonts');
+function mini(t){return `<svg viewBox='-50 -50 100 100' width='18' height='18' style='vertical-align:-3px;margin-left:2px'><path d='${GLYPH[t]}' fill='currentColor' fill-rule='evenodd'/></svg>`;}
+function drawFonts(){fbox.innerHTML='<span>초 글씨체</span>'+FONTS.map(f=>`<button type="button" data-f="${f.id}" aria-pressed="${f.id===font.id}" style="font-family:${f.fam.replace(/"/g,"'")},serif;font-weight:${f.w}">${f.svg?f.name+' '+mini('R')+mini('K'):f.name+' '+(f.simp?'车楚':'車楚')}</button>`).join('');}
+if(fbox)fbox.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;font=FONTS.find(f=>f.id===b.dataset.f);try{localStorage.setItem('choFont2',font.id);}catch(e){}drawFonts();draw();});
+if(document.fonts)document.fonts.ready.then(()=>draw());
+const SIZE={K:50,R:42,C:42,H:42,E:42,G:33,P:33};
+// 영상 속 배치 (열 0~8, 행 0~9, 위가 초)
+const VIDEO=[
+ ['cho','R',0,0],['cho','G',3,0],['cho','G',5,0],['cho','H',6,0],['cho','E',7,0],['cho','R',8,0],
+ ['cho','K',4,1],['cho','H',2,2],['cho','C',4,2],['cho','C',7,2],
+ ['cho','P',0,3],['cho','P',2,3],['cho','P',3,3],['cho','E',4,3],['cho','P',6,3],['cho','P',7,3],
+ ['han','P',1,6],['han','P',2,6],['han','P',4,6],['han','P',6,6],['han','P',8,6],
+ ['han','C',1,7],['han','H',2,7],['han','C',4,7],['han','H',5,7],['han','K',4,8],
+ ['han','R',0,9],['han','E',2,9],['han','G',3,9],['han','G',5,9],['han','E',7,9],['han','R',8,9]
+];
+// 기본 처음 배치 (마상상마)
+const FORM={'마상상마':'HEEH','상마마상':'EHHE','마상마상':'HEHE','상마상마':'EHEH'};
+function makeStart(choF,hanF){const a=[];
+ const row=(side,f,r)=>{const p=FORM[f],cols=side==='han'?[1,2,6,7]:[7,6,2,1];
+  a.push([side,'R',0,r],[side,'R',8,r],[side,'G',3,r],[side,'G',5,r]);cols.forEach((c,i)=>a.push([side,p[i],c,r]));};
+ row('cho',choF,0);row('han',hanF,9);
+ a.push(['cho','K',4,1],['han','K',4,8],['cho','C',1,2],['cho','C',7,2],['han','C',1,7],['han','C',7,7]);
+ [0,2,4,6,8].forEach(c=>{a.push(['cho','P',c,3]);a.push(['han','P',c,6]);});return a;}
+
+function janggiEngine(){
+ const VAL=[0,0,300,300,500,1300,700,200], OV=[0,20000,300,300,500,1300,700,200];
+ const so=x=>x>>3, ty=x=>x&7;
+ const inPal=(c,r)=>c>=3&&c<=5&&(r<=2||r>=7);
+ const half=r=>r<=2?0:1;
+ const PD=Array.from({length:90},()=>[]);
+ for(const m of [1,8])for(const [c,r] of [[3,m-1],[5,m-1],[3,m+1],[5,m+1]]){const dc=4-c,dr=m-r;PD[r*9+c].push([dc,dr]);PD[m*9+4].push([-dc,-dr]);}
+ const ok=(c,r)=>c>=0&&c<=8&&r>=0&&r<=9;
+ const O4=[[0,1],[0,-1],[1,0],[-1,0]];
+ const kpos=[-1,-1];
+ function setK(b){kpos[0]=kpos[1]=-1;for(let q=0;q<90;q++)if(b[q]&&ty(b[q])===1)kpos[so(b[q])]=q;}
+ function gen(b,s,capOnly){
+  const mv=[];
+  for(let q=0;q<90;q++){const x=b[q];if(!x||so(x)!==s)continue;const t=ty(x),c=q%9,r=(q/9)|0;
+   const add=(c2,r2)=>{if(!ok(c2,r2))return;const q2=r2*9+c2,y=b[q2];if(y&&so(y)===s)return;if(capOnly&&!y)return;mv.push(q*90+q2);};
+   const own=(c2,r2)=>c2>=3&&c2<=5&&(s===0?r2>=0&&r2<=2:r2>=7&&r2<=9);
+   if(t===1||t===2){for(const[dc,dr]of O4)if(own(c+dc,r+dr))add(c+dc,r+dr);for(const[dc,dr]of PD[q])if(own(c+dc,r+dr))add(c+dc,r+dr);}
+   else if(t===5){
+    for(const[dc,dr]of O4){let cc=c+dc,rr=r+dr;while(ok(cc,rr)){const y=b[rr*9+cc];if(!y){add(cc,rr);}else{if(so(y)!==s)add(cc,rr);break;}cc+=dc;rr+=dr;}}
+    for(const[dc,dr]of PD[q]){let cc=c+dc,rr=r+dr;while(inPal(cc,rr)&&half(rr)===half(r)){const y=b[rr*9+cc];if(!y)add(cc,rr);else{if(so(y)!==s)add(cc,rr);break;}if(!(cc===4&&(rr===1||rr===8)))break;cc+=dc;rr+=dr;}}
+   }else if(t===6){
+    for(const[dc,dr]of O4){let cc=c+dc,rr=r+dr,scr=false;while(ok(cc,rr)){const y=b[rr*9+cc];
+      if(!scr){if(y){if(ty(y)===6)break;scr=true;}}
+      else{if(!y)add(cc,rr);else{if(so(y)!==s&&ty(y)!==6)add(cc,rr);break;}}
+      cc+=dc;rr+=dr;}}
+    if(!(c===4&&(r===1||r===8)))for(const[dc,dr]of PD[q]){const m=b[(r+dr)*9+c+dc];if(m&&ty(m)!==6){const c2=c+2*dc,r2=r+2*dr,y=b[r2*9+c2];if(!y||(so(y)!==s&&ty(y)!==6))add(c2,r2);}}
+   }else if(t===4){
+    for(const[dc,dr]of O4){const lc=c+dc,lr=r+dr;if(!ok(lc,lr)||b[lr*9+lc])continue;
+     if(dc===0){add(c-1,r+2*dr);add(c+1,r+2*dr);}else{add(c+2*dc,r-1);add(c+2*dc,r+1);}}
+   }else if(t===3){
+    for(const[dc,dr]of O4){const lc=c+dc,lr=r+dr;if(!ok(lc,lr)||b[lr*9+lc])continue;
+     for(const e of[-1,1]){let l2c,l2r,tc,tr;if(dc===0){l2c=c+e;l2r=r+2*dr;tc=c+2*e;tr=r+3*dr;}else{l2c=c+2*dc;l2r=r+e;tc=c+3*dc;tr=r+2*e;}
+      if(!ok(l2c,l2r)||b[l2r*9+l2c])continue;add(tc,tr);}}
+   }else if(t===7){const f=s===0?1:-1;add(c,r+f);add(c-1,r);add(c+1,r);
+    for(const[dc,dr]of PD[q])if(dr===f&&inPal(c+dc,r+dr)&&half(r+dr)===half(r))add(c+dc,r+dr);}
+  }
+  return mv;
+ }
+ function make(b,m){const f=(m/90)|0,t=m%90,cap=b[t];b[t]=b[f];b[f]=0;if(ty(b[t])===1)kpos[so(b[t])]=t;if(cap&&ty(cap)===1)kpos[so(cap)]=-1;return cap;}
+ function unmake(b,m,cap){const f=(m/90)|0,t=m%90;b[f]=b[t];b[t]=cap;if(ty(b[f])===1)kpos[so(b[f])]=f;if(cap&&ty(cap)===1)kpos[so(cap)]=t;}
+ function inCheck(b,s){setK(b);const k=kpos[s];if(k<0)return true;return gen(b,1-s,true).some(m=>m%90===k);}
+ function legal(b,s){setK(b);const out=[];for(const m of gen(b,s,false)){const cap=make(b,m);const k=kpos[s];const bad=gen(b,1-s,true).some(x=>x%90===k);unmake(b,m,cap);if(!bad)out.push(m);}return out;}
+ function evalB(b,s){let v=0;for(let q=0;q<90;q++){const x=b[q];if(!x)continue;const t=ty(x),side=so(x),c=q%9,r=(q/9)|0;let w=VAL[t];
+   if(t===7){const adv=side===0?r-3:6-r;if(adv>0)w+=adv*12;if(inPal(c,r)&&half(r)!==side)w+=25;}
+   else if(t===4){w-=Math.abs(c-4)*6;const adv=side===0?r:9-r;if(adv>=2&&adv<=6)w+=15;}
+   else if(t===6){w-=Math.abs(c-4)*3;}
+   else if(t===5){const adv=side===0?r:9-r;if(adv>=3)w+=10;}
+   v+=side===s?w:-w;}
+  return v;}
+ const MATE=100000;let nodes=0,deadline=0,stop=false;const killers=[];
+ const order=(b,mv,ply,pv)=>{const k=killers[ply]||[];return mv.map(m=>{const t=m%90,f=(m/90)|0,y=b[t];let sc=y?OV[ty(y)]*10-OV[ty(b[f])]:0;if(m===pv)sc=1e9;else if(!y&&(m===k[0]||m===k[1]))sc=500;return[sc,m];}).sort((a,b)=>b[0]-a[0]).map(a=>a[1]);};
+ function qs(b,s,a,be,ply,d){if(kpos[s]<0)return -MATE+ply;const st=evalB(b,s);if(st>=be)return st;if(st>a)a=st;if(d>6)return st;
+  for(const m of order(b,gen(b,s,true),ply,0)){const cap=make(b,m);const sc=-qs(b,1-s,-be,-a,ply+1,d+1);unmake(b,m,cap);if(sc>=be)return sc;if(sc>a)a=sc;}return a;}
+ function nega(b,s,d,a,be,ply){if(kpos[s]<0)return -MATE+ply;if(d<=0)return qs(b,s,a,be,ply,0);
+  if((++nodes&1023)===0&&Date.now()>deadline)stop=true;if(stop)return 0;
+  const mv=order(b,gen(b,s,false),ply,0);if(!mv.length)return 0;let best=-Infinity;
+  for(const m of mv){const cap=make(b,m);const sc=-nega(b,1-s,d-1,-be,-a,ply+1);unmake(b,m,cap);if(stop)return 0;
+   if(sc>best)best=sc;if(sc>a)a=sc;if(a>=be){if(!cap){const k=killers[ply]||(killers[ply]=[0,0]);if(k[0]!==m){k[1]=k[0];k[0]=m;}}break;}}
+  return best;}
+ function search(b0,s,ms,maxD,noise){maxD=maxD||20;noise=noise||0;const b=b0.slice();setK(b);let root=legal(b,s);if(!root.length)return{move:-1};setK(b);
+  deadline=Date.now()+ms;stop=false;nodes=0;killers.length=0;let best=root[0],bestSc=0,depth=0;
+  for(let d=1;d<=maxD;d++){let a=-Infinity,cur=root[0],curSc=-Infinity,curN=-Infinity;const last=d===maxD;
+   root=order(b,root,0,best);
+   for(const m of root){const cap=make(b,m);const sc=-nega(b,1-s,d-1,noise?-Infinity:-Infinity,noise&&last?Infinity:-a,1);unmake(b,m,cap);if(stop)break;const sn=sc+(noise&&last?Math.random()*noise:0);if(sn>curN){curN=sn;curSc=sc;cur=m;}if(sc>a)a=sc;}
+   if(stop)break;best=cur;bestSc=curSc;depth=d;if(curSc>MATE-100)break;if(Date.now()>deadline-ms*0.45)break;}
+  return{move:best,score:bestSc,depth,nodes};}
+ return{gen,legal,inCheck,search,make,unmake,setK};
+}
+
+const ENG=janggiEngine();
+const TN={K:1,G:2,E:3,H:4,R:5,C:6,P:7};
+let mode='ai',aiSide='cho',over=null,thinking=false,targets=[],status='';
+function toBoard(){const b=new Array(90).fill(0);pieces.forEach(p=>{b[p.r*9+p.c]=TN[p.t]|((p.s==='cho'?0:1)<<3);});return b;}
+const sideN=x=>x==='cho'?0:1, NM=x=>x==='cho'?'초':'한';
+let worker=null;
+try{const src=janggiEngine.toString()+';const E=janggiEngine();onmessage=e=>postMessage(E.search(e.data.b,e.data.s,e.data.ms,e.data.maxD,e.data.noise));';
+ worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));}catch(e){worker=null;}
+function legalFor(p){const b=toBoard();const q=p.r*9+p.c;return ENG.legal(b,sideN(p.s)).filter(m=>((m/90)|0)===q).map(m=>m%90);}
+function checkState(){
+ over=null;status='';if(mode==='free')return;
+ const b=toBoard(),s=sideN(turn);const lm=ENG.legal(b,s),chk=ENG.inCheck(b,s);
+ if(!lm.length){if(chk){over=(turn==='cho'?'han':'cho');status=`외통! ${NM(over)} 승리`;setRun(false);finishGame();}else{status=`${NM(turn)} 둘 수 없음 · 한수 쉼`;turn=turn==='cho'?'han':'cho';paintPl();}}
+ else if(chk)status='장군!';
+}
+function maybeAI(){
+ if(mode!=='ai'||over||turn!==aiSide||thinking)return;
+ thinking=true;draw();
+ const b=toBoard(),s=sideN(turn),L=aiLevel(),ms=L.ms,maxD=L.maxD,noise=L.noise;
+ const done=r=>{thinking=false;if(mode!=='ai'||turn!==aiSide||over){draw();return;}
+  if(r.move<0){checkState();draw();return;}
+  const f=(r.move/90)|0,t=r.move%90,p=pieces.find(q=>q.r*9+q.c===f);if(p)move(p,t%9,(t/9)|0);else draw();};
+ if(worker){worker.onmessage=e=>done(e.data);worker.postMessage({b,s,ms,maxD,noise});}
+ else setTimeout(()=>done(ENG.search(b,s,ms,maxD,noise)),30);
+}
+function applyMode(){
+ const ai=mode==='ai';document.getElementById('aiside').hidden=!ai;
+ for(const k of ['cho','han']){const isAI=ai&&k===aiSide,nm=document.getElementById('nm-'+k),rk=document.getElementById('rk-'+k);
+  const me=ai&&!isAI&&user;
+  if(isAI){nm.value='AI';rk.value=RANKS[user?user.rank:26];}
+  else if(me){nm.value=user.id;rk.value=RANKS[user.rank];}
+  else if(nm.value==='AI'||(user&&nm.value===user.id)){nm.value=NM(k);}
+  nm.disabled=isAI||me;rk.disabled=isAI||me;}
+ if(!ai)rated=false;
+ flip=ai&&aiSide==='han';sel=null;targets=[];checkState();paintPl();draw();maybeAI();
+}
+
+const RANKS=[...Array.from({length:18},(_,i)=>(18-i)+'급'),...Array.from({length:9},(_,i)=>(i+1)+'단')];
+const need=i=>i<18?3:5;
+let user=null,rated=false,recorded=false;
+function aiLevel(){const i=user?user.rank:26;
+ const D=[1,1,1,2,2,2,2,3,3,3,3,3,4,4,4,4,4,5,5,5,5,6,6,6,7,8,20];
+ return{maxD:D[i],ms:500+i*80,noise:Math.max(0,160-i*8)};}
+function sha256(str){const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+ const b=Array.from(new TextEncoder().encode(str));const l=b.length*8;b.push(0x80);while(b.length%64!==56)b.push(0);for(let i=7;i>=0;i--)b.push(i>3?0:(l>>>(i*8))&255);
+ let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+ for(let o=0;o<b.length;o+=64){const w=[];for(let i=0;i<16;i++)w[i]=(b[o+4*i]<<24)|(b[o+4*i+1]<<16)|(b[o+4*i+2]<<8)|b[o+4*i+3];
+  for(let i=16;i<64;i++){const s0=rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>>3),s1=rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0;}
+  let[a,bb,c,d,e,f,g,h]=H;for(let i=0;i<64;i++){const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])|0,S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&bb)^(a&c)^(bb&c),t2=(S0+mj)|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=bb;bb=a;a=(t1+t2)|0;}
+  H=H.map((v,i)=>(v+[a,bb,c,d,e,f,g,h][i])|0);}
+ return H.map(v=>(v>>>0).toString(16).padStart(8,'0')).join('');}
+const UK='janggiUsers',SK='janggiSession';
+const users=()=>{try{return JSON.parse(localStorage.getItem(UK)||'{}');}catch(e){return{};}};
+const saveUsers=u=>{try{localStorage.setItem(UK,JSON.stringify(u));}catch(e){}};
+function saveUser(){if(!user)return;const u=users();u[user.id]=user;saveUsers(u);}
+function paintMe(){const e=document.getElementById('me-info');if(!e||!user)return;const i=user.rank,top=i>=26;
+ e.innerHTML=`<b>${user.id}</b> <span class="rk">${RANKS[i]}</span> ${user.wins}승 ${user.losses}패`+
+  `<span class="prog">${top?'최고 단계 9단':`${i<17?RANKS[i+1]:i===17?'1단':RANKS[i+1]}까지 ${need(i)-user.prog}승`}</span>`+
+  `<span class="pbar"><i style="width:${top?100:user.prog/need(i)*100}%"></i></span>`;}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),3500);}
+function finishGame(){if(!rated||recorded||!user||mode!=='ai')return;recorded=true;
+ const me=aiSide==='cho'?'han':'cho';
+ if(over===me){user.wins++;user.prog++;if(user.rank<26&&user.prog>=need(user.rank)){const from=RANKS[user.rank];user.rank++;user.prog=0;toast(`승급! ${from} → ${RANKS[user.rank]}`);}else toast(`승리! ${user.rank<26?RANKS[user.rank+1]+'까지 '+(need(user.rank)-user.prog)+'승':'9단 유지'}`);}
+ else{user.losses++;toast('패배 · 다음 판에서 다시 도전하세요');}
+ saveUser();paintMe();applyNames();}
+function applyNames(){if(mode!=='ai'||!user)return;const me=aiSide==='cho'?'han':'cho';
+ document.getElementById('nm-'+me).value=user.id;document.getElementById('rk-'+me).value=RANKS[user.rank];document.getElementById('rk-'+aiSide).value=RANKS[user.rank];}
+function enter(u){user=u;try{localStorage.setItem(SK,u.id);}catch(e){}document.getElementById('gate').hidden=true;document.body.classList.remove('locked');
+ paintMe();mode='ai';document.getElementById('mode').value='ai';newGame();applyMode();}
+function initAuth(){
+ const g=document.getElementById('gate'),f=document.getElementById('authf'),msg=document.getElementById('amsg');let tab='login';
+ const setTab=t=>{tab=t;g.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  document.getElementById('pw2w').hidden=t!=='join';document.getElementById('asub').textContent=t==='join'?'가입하고 시작':'로그인';msg.textContent='';};
+ g.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+ f.addEventListener('submit',e=>{e.preventDefault();const id=document.getElementById('aid').value.trim(),pw=document.getElementById('apw').value;const u=users();
+  if(!/^[가-힣A-Za-z0-9_]{2,12}$/.test(id)){msg.textContent='아이디는 2~12자 한글·영문·숫자로 입력하세요.';return;}
+  if(pw.length<4){msg.textContent='비밀번호는 4자 이상이어야 합니다.';return;}
+  if(tab==='join'){if(u[id]){msg.textContent='이미 있는 아이디입니다.';return;}
+   if(pw!==document.getElementById('apw2').value){msg.textContent='비밀번호가 서로 다릅니다.';return;}
+   const salt=Math.random().toString(36).slice(2,10);u[id]={id,salt,hash:sha256(salt+pw),rank:0,prog:0,wins:0,losses:0};saveUsers(u);enter(u[id]);}
+  else{const x=u[id];if(!x||x.hash!==sha256(x.salt+pw)){msg.textContent='아이디 또는 비밀번호가 맞지 않습니다.';return;}enter(x);}
+  document.getElementById('apw').value='';document.getElementById('apw2').value='';});
+ document.getElementById('logout').addEventListener('click',()=>{if(thinking)return;setRun(false);user=null;try{localStorage.removeItem(SK);}catch(e){}g.hidden=false;document.body.classList.add('locked');setTab('login');});
+ let sid=null;try{sid=localStorage.getItem(SK);}catch(e){}const u=users();
+ if(sid&&u[sid])enter(u[sid]);else{g.hidden=false;document.body.classList.add('locked');setTab(Object.keys(u).length?'login':'join');}
+}
+let pieces=[],hist=[],sel=null,flip=false,last=null;
+
+let turn='cho',T={cho:300,han:300},run=false,tick=null,lastT=0;
+const fmt=x=>{x=Math.max(0,Math.ceil(x));return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');};
+const PTS={R:13,C:7,H:5,E:3,G:3,P:2,K:0};
+function paintScore(){for(const k of ['cho','han']){let v=pieces.filter(p=>p.s===k).reduce((a,p)=>a+PTS[p.t],0);if(k==='han')v+=1.5;const e=document.getElementById('sc-'+k);if(e)e.innerHTML=`점수 <b>${v}</b>`;}}
+function paintPl(){paintScore();for(const k of ['cho','han']){const b=document.getElementById('rs-'+k);if(b)b.hidden=mode==='free'||(mode==='ai'&&k===aiSide)||!!over;}for(const k of ['cho','han']){const b=document.getElementById('pl-'+k);b.classList.toggle('on',turn===k);b.classList.toggle('out',T[k]<=0);document.getElementById('ck-'+k).textContent=T[k]<=0?'시간 초과':fmt(T[k]);}
+ document.getElementById('clockbtn').textContent=run?'시계 멈춤':'시계 시작';document.getElementById('play').classList.toggle('flip',flip);}
+function setRun(v){run=v;clearInterval(tick);if(run){lastT=performance.now();tick=setInterval(()=>{const n=performance.now();T[turn]-=(n-lastT)/1000;lastT=n;if(T[turn]<=0&&!over){T[turn]=0;setRun(false);over=turn==='cho'?'han':'cho';status=`${NM(turn)} 시간패 · ${NM(over)} 승리`;sel=null;targets=[];finishGame();draw();}paintPl();},200);}paintPl();}
+function resetClock(){setRun(false);const v=+document.getElementById('tsel').value;T={cho:v,han:v};turn='cho';paintPl();}
+document.getElementById('clockbtn').addEventListener('click',()=>{if(T[turn]<=0)return;setRun(!run);});
+document.getElementById('tsel').addEventListener('change',()=>{resetClock();if(!over)setRun(true);});
+const PK='janggiPlayers';
+try{const v=JSON.parse(localStorage.getItem(PK)||'null');if(v)for(const k of ['cho','han']){if(v[k]){document.getElementById('nm-'+k).value=v[k].n;document.getElementById('rk-'+k).value=v[k].r;}}}catch(e){}
+for(const k of ['cho','han']){if(!document.getElementById('rk-'+k).dataset.set&&!localStorage_has())document.getElementById('rk-'+k).value='3단';
+ ['nm-','rk-'].forEach(p=>document.getElementById(p+k).addEventListener('change',savePl));}
+function localStorage_has(){try{return !!localStorage.getItem(PK);}catch(e){return false;}}
+function savePl(){try{const o={};for(const k of ['cho','han'])o[k]={n:document.getElementById('nm-'+k).value,r:document.getElementById('rk-'+k).value};localStorage.setItem(PK,JSON.stringify(o));}catch(e){}}
+const load=(set,isRated)=>{if(thinking)return;rated=!!isRated&&mode==='ai';recorded=false;pieces=set.map(([s,t,c,r],i)=>({id:i,s,t,c,r}));hist=[];sel=null;targets=[];last=null;resetClock();checkState();if(!over)setRun(true);draw();maybeAI();};
+const vc=c=>flip?8-c:c, vr=r=>flip?9-r:r;
+const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const oct=R=>{const k=R*0.414;return [[-k,-R],[k,-R],[R,-k],[R,k],[k,R],[-k,R],[-R,k],[-R,-k]].map(p=>p.join(',')).join(' ');};
+
+function grid(){
+ const g=el('g',{stroke:'#4a3418','stroke-width':2.2,fill:'none'});
+ for(let r=0;r<10;r++)g.appendChild(el('line',{x1:X(0),y1:Y(r),x2:X(8),y2:Y(r)}));
+ for(let c=0;c<9;c++)g.appendChild(el('line',{x1:X(c),y1:Y(0),x2:X(c),y2:Y(9)}));
+ [[0,2],[7,9]].forEach(([a,b])=>{
+  g.appendChild(el('line',{x1:X(3),y1:Y(a),x2:X(5),y2:Y(b)}));
+  g.appendChild(el('line',{x1:X(5),y1:Y(a),x2:X(3),y2:Y(b)}));
+ });
+ return g;
+}
+function marks(){
+ const g=el('g',{stroke:'#4a3418','stroke-width':2});
+ const pts=[[1,2],[7,2],[1,7],[7,7],[0,3],[2,3],[4,3],[6,3],[8,3],[0,6],[2,6],[4,6],[6,6],[8,6]];
+ pts.forEach(([c,r])=>{const x=X(c),y=Y(r),d=9;
+  g.appendChild(el('line',{x1:x-d,y1:y-d,x2:x+d,y2:y+d}));g.appendChild(el('line',{x1:x-d,y1:y+d,x2:x+d,y2:y-d}));});
+ return g;
+}
+function draw(){
+ svg.innerHTML='';
+ const defs=el('defs',{});
+ defs.innerHTML=`<linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#f1cf8c"/><stop offset=".5" stop-color="#e6bd72"/><stop offset="1" stop-color="#dcae60"/></linearGradient>
+  <pattern id="grain" width="920" height="24" patternUnits="userSpaceOnUse">
+  <path d="M0 6 Q230 2 460 7 T920 5" stroke="#c99a4c" stroke-opacity=".35" fill="none" stroke-width="1.5"/>
+  <path d="M0 17 Q300 21 600 16 T920 18" stroke="#b98a40" stroke-opacity=".22" fill="none"/></pattern>
+  <radialGradient id="face" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f4f5f7"/><stop offset="1" stop-color="#d9dce2"/></radialGradient>
+  <linearGradient id="side" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c4c8cf"/><stop offset="1" stop-color="#8b9099"/></linearGradient>
+  <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#e3e5ea"/><stop offset="1" stop-color="#a7acb5"/></linearGradient>
+  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="2" dy="5" stdDeviation="3.5" flood-color="#3a2508" flood-opacity=".45"/></filter>`;
+ svg.appendChild(defs);
+ svg.appendChild(el('rect',{x:0,y:0,width:920,height:1020,fill:'url(#wood)'}));
+ svg.appendChild(el('rect',{x:0,y:0,width:920,height:1020,fill:'url(#grain)'}));
+ const gr=el('g',{transform:flip?'rotate(180 460 510)':''});
+ gr.appendChild(grid());gr.appendChild(marks());svg.appendChild(gr);
+ // 빈 칸 클릭 영역
+ const hit=el('g',{});
+ for(let r=0;r<10;r++)for(let c=0;c<9;c++){
+  const h=el('rect',{x:X(c)-S/2,y:Y(r)-S/2,width:S,height:S,fill:'transparent'});
+  h.addEventListener('click',()=>tap(flip?8-c:c,flip?9-r:r));hit.appendChild(h);
+ }
+ svg.appendChild(hit);
+ if(last){const[c,r]=last;svg.appendChild(el('circle',{cx:X(vc(c)),cy:Y(vr(r)),r:16,fill:'#e2403a','fill-opacity':.55,'pointer-events':'none'}));}
+ pieces.forEach(p=>{
+  const R=SIZE[p.t],x=X(vc(p.c)),y=Y(vr(p.r));
+  const g=el('g',{class:'pc',transform:`translate(${x} ${y})`});
+  const up=sel===p.id?-6:0, cho=p.s==='cho', ink=cho?'#1c4fbf':'#cf1f17';
+  if(sel===p.id)g.appendChild(el('polygon',{points:oct(R+9),fill:'#f0b84a','fill-opacity':.35,stroke:'#f0b84a','stroke-width':4,transform:'translate(0 4)'}));
+  const body=el('g',{transform:`translate(0 ${up})`,filter:'url(#sh)'});
+  body.appendChild(el('polygon',{points:oct(R),fill:'url(#side)',transform:'translate(0 7)'}));
+  body.appendChild(el('polygon',{points:oct(R),fill:'url(#face)'}));
+  g.appendChild(body);
+  const k=cho?font.k:1.02;
+  const t=el('text',{x:0,y:up+R*k*0.35,'text-anchor':'middle',
+   'font-family':cho?font.fam+',"Noto Serif TC",serif':'"Noto Serif TC",serif','font-weight':cho?font.w:900,
+   'font-size':R*k,fill:ink,stroke:'#ffffff','stroke-width':2,'paint-order':'stroke'});
+  if(cho&&font.svg){
+   const sc=R*0.95/50, gg=el('g',{transform:`translate(0 ${up}) scale(${sc})`});
+   gg.appendChild(el('path',{d:GLYPH[p.t],fill:'#ffffff','fill-rule':'evenodd',stroke:'#ffffff','stroke-width':3,'stroke-linejoin':'round'}));
+   gg.appendChild(el('path',{d:GLYPH[p.t],fill:'#1a3fae','fill-rule':'evenodd'}));
+   g.appendChild(gg);
+  }else{const ch=CHAR[p.s][p.t];t.textContent=cho&&font.simp?(SIMP[ch]||ch):ch;g.appendChild(t);}
+  g.addEventListener('click',e=>{e.stopPropagation();tapPiece(p);});
+  svg.appendChild(g);
+ });
+ targets.forEach(q=>{const c=q%9,r=(q/9)|0,occ=pieces.some(p=>p.c===c&&p.r===r);
+  svg.appendChild(occ?el('circle',{cx:X(vc(c)),cy:Y(vr(r)),r:52,fill:'none',stroke:'#2fae5a','stroke-width':7,'pointer-events':'none'})
+   :el('circle',{cx:X(vc(c)),cy:Y(vr(r)),r:15,fill:'#2fae5a','fill-opacity':.85,'pointer-events':'none'}));});
+ document.getElementById('turn').textContent=thinking?'AI 생각 중…':over?status:sel!==null?'옮길 자리를 고르세요':`${status?status+' · ':''}${hist.length}수 · ${NM(turn)} 차례`;
+}
+function tapPiece(p){
+ if(mode!=='free'){
+  if(over||thinking)return;
+  if(sel!==null&&p.s!==turn){const q=p.r*9+p.c;if(targets.includes(q)){const s=pieces.find(x=>x.id===sel);return move(s,p.c,p.r);}return;}
+  if(p.s!==turn||(mode==='ai'&&p.s===aiSide))return;
+  if(sel===p.id){sel=null;targets=[];draw();return;}
+  sel=p.id;targets=legalFor(p);draw();return;
+ }
+ if(sel===null){sel=p.id;draw();return;}
+ const s=pieces.find(q=>q.id===sel);
+ if(s.id===p.id){sel=null;draw();return;}
+ if(s.s===p.s){sel=p.id;draw();return;}
+ move(s,p.c,p.r);
+}
+function tap(c,r){
+ if(sel===null)return;
+ const s=pieces.find(q=>q.id===sel);
+ const there=pieces.find(q=>q.c===c&&q.r===r);
+ if(there)return tapPiece(there);
+ if(mode!=='free'){if(targets.includes(r*9+c))move(s,c,r);else{sel=null;targets=[];draw();}return;}
+ move(s,c,r);
+}
+function move(s,c,r){
+ hist.push(JSON.stringify({pieces,last,turn}));
+ pieces=pieces.filter(q=>!(q.c===c&&q.r===r&&q.id!==s.id));
+ last=[s.c,s.r];s.c=c;s.r=r;sel=null;targets=[];turn=s.s==='cho'?'han':'cho';if(run)lastT=performance.now();checkState();paintPl();draw();maybeAI();
+}
+document.getElementById('undo').addEventListener('click',()=>{if(thinking||!hist.length)return;
+ const pop=()=>{const h=JSON.parse(hist.pop());pieces=h.pieces;last=h.last;if(h.turn)turn=h.turn;};
+ pop();if(mode==='ai')while(turn===aiSide&&hist.length)pop();
+ sel=null;targets=[];checkState();paintPl();draw();maybeAI();});
+document.getElementById('reset').addEventListener('click',()=>load(VIDEO));
+const newGame=()=>load(makeStart(document.getElementById('f-cho').value,document.getElementById('f-han').value),true);
+document.getElementById('start').addEventListener('click',newGame);
+['f-cho','f-han'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{if(!hist.length&&!thinking)newGame();}));
+function resign(loser){if(over||mode==='free')return;over=loser==='cho'?'han':'cho';
+ status=`${NM(loser)} 기권 · ${NM(over)} 승리`;sel=null;targets=[];setRun(false);finishGame();
+ if(thinking&&worker){worker.terminate();worker=null;try{const src=janggiEngine.toString()+';const E=janggiEngine();onmessage=e=>postMessage(E.search(e.data.b,e.data.s,e.data.ms,e.data.maxD,e.data.noise));';worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));}catch(e){}}
+ thinking=false;paintPl();draw();}
+let askT=null;
+function askResign(btn,loser){if(over||mode==='free')return;
+ if(btn.classList.contains('ask')){clearTimeout(askT);btn.classList.remove('ask');btn.textContent=btn.dataset.l;resign(loser);return;}
+ btn.dataset.l=btn.dataset.l||btn.textContent;btn.classList.add('ask');btn.textContent='정말 기권?';
+ askT=setTimeout(()=>{btn.classList.remove('ask');btn.textContent=btn.dataset.l;},3000);}
+document.getElementById('resign').addEventListener('click',e=>askResign(e.currentTarget,mode==='ai'?(aiSide==='cho'?'han':'cho'):turn));
+for(const k of ['cho','han'])document.getElementById('rs-'+k).addEventListener('click',e=>askResign(e.currentTarget,k));
+document.getElementById('flip').addEventListener('click',()=>{flip=!flip;paintPl();draw();});
+document.getElementById('mode').addEventListener('change',e=>{if(thinking)return;mode=e.target.value;applyMode();});
+document.getElementById('aiside').addEventListener('change',e=>{if(thinking)return;aiSide=e.target.value;applyMode();if(mode==='ai')newGame();});
+pieces=makeStart('마상상마','마상상마').map(([s,t,c,r],i)=>({id:i,s,t,c,r}));draw();
+initAuth();
+}
+</script>
+</body>
+</html>
